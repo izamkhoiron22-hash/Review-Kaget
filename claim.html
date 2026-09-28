@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Link Kaget</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="card center">
+  <div id="icon" class="emoji">🎁</div>
+  <h1 id="title">LINK KAGET</h1>
+  <p id="message" class="muted">Siapa cepat dia dapat.</p>
+  <button id="claim">KLAIM SEKARANG!</button>
+  <a id="reward" class="reward hidden" target="_blank" rel="noopener">🎉 BUKA HADIAH</a>
+</main>
+
+<script>
+const id = location.pathname.split("/").pop();
+const claim = document.querySelector("#claim");
+const title = document.querySelector("#title");
+const message = document.querySelector("#message");
+const icon = document.querySelector("#icon");
+const reward = document.querySelector("#reward");
+
+claim.onclick = async () => {
+  claim.disabled = true;
+  claim.textContent = "MENGECEK...";
+
+  try {
+    const r = await fetch(`/api/drops/${encodeURIComponent(id)}/claim`, {
+      method: "POST"
+    });
+    const data = await r.json();
+
+    if (r.ok && data.success) {
+      icon.textContent = "🎉";
+      title.textContent = "SELAMAT!";
+      message.textContent = "Kamu adalah orang pertama yang mengklaim hadiah ini!";
+      reward.href = data.rewardUrl;
+      reward.classList.remove("hidden");
+      claim.classList.add("hidden");
+    } else if (r.status === 409) {
+      icon.textContent = "😢";
+      title.textContent = "YAH, TERLAMBAT!";
+      message.textContent = "Hadiah ini sudah diklaim orang lain.";
+      claim.textContent = "SUDAH DIAMBIL";
+    } else {
+      throw new Error(data.error || "Terjadi kesalahan.");
+    }
+  } catch (e) {
+    icon.textContent = "⚠️";
+    title.textContent = "ERROR";
+    message.textContent = e.message;
+    claim.disabled = false;
+    claim.textContent = "COBA LAGI";
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Link Kaget — Buat Link</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="card">
+  <div class="emoji">🎁</div>
+  <h1>Link Kaget</h1>
+  <p class="muted">Satu link. Satu pemenang. Siapa cepat, dia dapat.</p>
+
+  <label for="reward">Link hadiah</label>
+  <input id="reward" type="url" placeholder="https://contoh.com/hadiah">
+
+  <button id="create">Buat Link Kaget</button>
+
+  <section id="result" class="result hidden">
+    <p>Link kamu sudah siap:</p>
+    <div class="copyrow">
+      <input id="claimUrl" readonly>
+      <button id="copy">Salin</button>
+    </div>
+    <a id="open" class="secondary" target="_blank">Buka untuk tes</a>
+  </section>
+
+  <p id="error" class="error"></p>
+</main>
+
+<script>
+const reward = document.querySelector("#reward");
+const create = document.querySelector("#create");
+const result = document.querySelector("#result");
+const claimUrl = document.querySelector("#claimUrl");
+const open = document.querySelector("#open");
+const error = document.querySelector("#error");
+
+create.onclick = async () => {
+  error.textContent = "";
+  const rewardUrl = reward.value.trim();
+  if (!rewardUrl) return error.textContent = "Masukkan link hadiah dulu.";
+
+  create.disabled = true;
+  create.textContent = "Membuat...";
+
+  try {
+    const r = await fetch("/api/drops", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({rewardUrl})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Gagal membuat link.");
+
+    claimUrl.value = data.claimUrl;
+    open.href = data.claimUrl;
+    result.classList.remove("hidden");
+  } catch (e) {
+    error.textContent = e.message;
+  } finally {
+    create.disabled = false;
+    create.textContent = "Buat Link Kaget";
+  }
+};
+
+document.querySelector("#copy").onclick = async () => {
+  await navigator.clipboard.writeText(claimUrl.value);
+  document.querySelector("#copy").textContent = "Tersalin ✓";
+  setTimeout(() => document.querySelector("#copy").textContent = "Salin", 1500);
+};
+</script>
+</body>
+</html>
